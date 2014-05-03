@@ -15,6 +15,11 @@ use CSBill\InvoiceBundle\Entity\Invoice;
 
 class ActionsController extends BaseController
 {
+    /**
+     * @param Invoice $invoice
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     */
     public function cancelAction(Invoice $invoice)
     {
         $this->setInvoiceStatus($invoice, 'cancelled');
@@ -24,16 +29,26 @@ class ActionsController extends BaseController
         return $this->redirect($this->generateUrl('_invoices_view', array('id' => $invoice->getId())));
     }
 
+    /**
+     * @param Invoice $invoice
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     */
     public function payAction(Invoice $invoice)
     {
-        $this->setInvoiceStatus($invoice, 'paid');
         $invoice->setPaidDate(new \DateTime('NOW'));
+        $this->setInvoiceStatus($invoice, 'paid');
 
         $this->flash($this->trans('Invoice Paid'), 'success');
 
         return $this->redirect($this->generateUrl('_invoices_view', array('id' => $invoice->getId())));
     }
 
+    /**
+     * @param Invoice $invoice
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     */
     public function sendAction(Invoice $invoice)
     {
         $this->get('billing.mailer')->sendInvoice($invoice);
@@ -47,15 +62,19 @@ class ActionsController extends BaseController
         return $this->redirect($this->generateUrl('_invoices_view', array('id' => $invoice->getId())));
     }
 
+    /**
+     * @param Invoice $invoice
+     * @param string  $status
+     */
     protected function setInvoiceStatus(Invoice $invoice, $status)
     {
         $status = $this->getRepository('CSBillInvoiceBundle:Status')->findOneByName($status);
 
         $invoice->setStatus($status);
 
-        $em = $this->getEm();
+        $entityManager = $this->getEm();
 
-        $em->persist($status);
-        $em->flush();
+        $entityManager->persist($invoice);
+        $entityManager->flush();
     }
 }
